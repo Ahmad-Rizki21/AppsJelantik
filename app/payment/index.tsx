@@ -23,11 +23,18 @@ export default function PaymentScreen() {
                 <View style={styles.sectionCard}>
                     <Text style={styles.sectionTitle}>Aksi Cepat</Text>
                     <View style={styles.quickActionRow}>
-                        <TouchableOpacity style={[styles.quickActionButton, { backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.3)' }]} onPress={() => {}}>
+                        <TouchableOpacity style={[styles.quickActionButton, { backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.3)' }]} onPress={() => router.push('/payment/invoice')}>
                             <View style={[styles.quickActionIcon, { backgroundColor: '#3B82F6' }]}>
                                 <Ionicons name="receipt" size={24} color="white" />
                             </View>
                             <Text style={[styles.quickActionText, { color: '#3B82F6' }]}>Bayar Tagihan</Text>
+                            
+                            {/* Has Bill Badge */}
+                            {true && ( // Mock hasUnpaidBill = true
+                                <View style={styles.billBadge}>
+                                    <Text style={styles.billBadgeText}>1</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
 
                         <View style={{ width: 12 }} />
@@ -248,5 +255,25 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontFamily: 'Poppins-Medium',
         color: '#6B7280',
+    },
+    billBadge: {
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        backgroundColor: '#EF4444',
+        minWidth: 24,
+        height: 24,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'white',
+        paddingHorizontal: 6,
+    },
+    billBadgeText: {
+        color: 'white',
+        fontSize: 12,
+        fontFamily: 'Poppins-Bold',
+        lineHeight: 16,
     },
 });

@@ -268,14 +268,12 @@ export default function PackageDetailScreen() {
                                 disabled={isAddingToCart}
                             >
                                 {isAddingToCart && selectedPackage?.id === pkg.id ? (
-                                    <ActivityIndicator size="small" color="white" />
+                                    <ActivityIndicator size="small" color="#10B981" />
                                 ) : (
-                                    <Ionicons name="cart" size={16} color="white" />
+                                    <Ionicons name="cart-outline" size={24} color="#10B981" />
                                 )}
-                                <Text style={styles.addToCartText}>
-                                    {isAddingToCart && selectedPackage?.id === pkg.id ? 'Menambahkan...' : 'Tambah ke Keranjang'}
-                                </Text>
                             </TouchableOpacity>
+
 
                             <TouchableOpacity
                                 style={[
@@ -401,7 +399,7 @@ export default function PackageDetailScreen() {
                         {isProcessing ? (
                             <Text style={styles.confirmButtonText}>Memproses...</Text>
                         ) : (
-                            <Text style={styles.confirmButtonText}>Konfirmasi Perubahan</Text>
+                            <Text style={styles.confirmButtonText}>Konfirmasi</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -469,32 +467,7 @@ export default function PackageDetailScreen() {
                     <View style={styles.headerContent}>
                         <Text style={styles.headerTitle}>{packet.title}</Text>
                         <Text style={styles.headerSpeed}>{packet.speed}</Text>
-                        <TouchableOpacity
-                            style={styles.subscribeButton}
-                            onPress={async () => {
-                                const currentPackage: Package = {
-                                    id: packet.packageId || 'current',
-                                    name: packet.title,
-                                    speed: packet.speed,
-                                    price: packet.price,
-                                    description: packet.description.split('\n')[0],
-                                    features: ['Koneksi Fiber Optic', 'Unlimited Quota', 'Support 24/7'],
-                                    activePeriod: packet.activePeriod || 'bulan',
-                                    isPromo: false,
-                                    color: CartService.getSpeedColor(packet.speed)
-                                };
 
-                                // Add to cart first
-                                await cartService.addToCart(currentPackage);
-                                setCartItemCount(cartService.getItemCount());
-
-                                // Navigate to cart
-                                router.push('/cart');
-                            }}
-                        >
-                            <Ionicons name="cart" size={16} color="white" />
-                            {/* <Text style={styles.subscribeButtonText}>Berlangganan Sekarang</Text> */}
-                        </TouchableOpacity>
                     </View>
                 </SafeAreaView>
             </View>
@@ -570,23 +543,7 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 12,
     },
-    subscribeButton: {
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginTop: 12,
-    },
-    subscribeButtonText: {
-        color: 'white',
-        fontFamily: 'Poppins-Medium',
-        fontSize: 14,
-    },
+
     bodyContainer: {
         flex: 1,
         backgroundColor: '#F9FAFB',
@@ -883,24 +840,32 @@ const styles = StyleSheet.create({
     },
     cancelButton: {
         flex: 1,
-        backgroundColor: 'white',
-        borderWidth: 2,
-        borderColor: '#E5E7EB',
+        backgroundColor: '#EFF6FF',
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
+        justifyContent: 'center',
     },
     cancelButtonText: {
         fontSize: 16,
-        fontFamily: 'Poppins-Bold',
-        color: '#6B7280',
+        fontFamily: 'Poppins-SemiBold',
+        color: '#3B82F6',
     },
     confirmButton: {
-        flex: 2,
+        flex: 1,
         backgroundColor: '#3B82F6',
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#3B82F6',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
     },
     confirmButtonText: {
         fontSize: 16,
@@ -959,19 +924,14 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     addToCartButton: {
-        flex: 1,
-        backgroundColor: '#10B981',
-        flexDirection: 'row',
+        width: 48,
+        height: 48,
+        backgroundColor: '#ECFDF5',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 12,
-        borderRadius: 8,
-        gap: 8,
-    },
-    addToCartText: {
-        color: 'white',
-        fontSize: 14,
-        fontFamily: 'Poppins-SemiBold',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#10B981',
     },
     selectButton: {
         flex: 1,
