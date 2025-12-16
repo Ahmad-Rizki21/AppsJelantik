@@ -16,16 +16,22 @@ import CartService, { CartItem, CustomerData } from '../services/cartService';
 export default function OrderSummaryScreen() {
   const params = useLocalSearchParams();
   const paymentMethod = params.paymentMethod as string;
+  const isInvoiceMode = params.mode === 'invoice';
+  const invoiceAmount = params.totalAmount ? parseInt(params.totalAmount.toString().replace(/[^0-9]/g, '')) : 0;
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!isInvoiceMode) {
+      loadData();
+    }
+  }, [isInvoiceMode]);
 
   const loadData = async () => {
+    if (isInvoiceMode) return;
+    
     try {
       await CartService.initialize();
       const items = CartService.getCartItems();
@@ -39,6 +45,15 @@ export default function OrderSummaryScreen() {
   };
 
   const getTotalPrice = () => {
+    if (isInvoiceMode) {
+        return {
+            subtotal: invoiceAmount,
+            tax: 0, 
+            admin: 0,
+            total: invoiceAmount
+        };
+    }
+
     const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
     const tax = Math.round(subtotal * 0.11);
     const admin = 5000;
@@ -286,7 +301,7 @@ export default function OrderSummaryScreen() {
   const paymentDetails = generatePaymentDetails();
   const prices = getTotalPrice();
 
-  if (!customerData) {
+  if (!customerData && !isInvoiceMode) {
     return (
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -321,31 +336,35 @@ export default function OrderSummaryScreen() {
           </View>
 
           {/* Package Details */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Detail Paket</Text>
-            {cartItems.map((item) => (
-              <View key={item.id} style={styles.packageRow}>
-                <View style={styles.packageInfo}>
-                  <Text style={styles.packageName}>{item.name}</Text>
-                  <Text style={styles.packageSpeed}>{item.speed}</Text>
-                </View>
-                <Text style={styles.packagePrice}>{formatPrice(item.price)}</Text>
+          {!isInvoiceMode && (
+            <>
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Detail Paket</Text>
+                {cartItems.map((item) => (
+                  <View key={item.id} style={styles.packageRow}>
+                    <View style={styles.packageInfo}>
+                      <Text style={styles.packageName}>{item.name}</Text>
+                      <Text style={styles.packageSpeed}>{item.speed}</Text>
+                    </View>
+                    <Text style={styles.packagePrice}>{formatPrice(item.price)}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
 
-          {/* Installation Details */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Jadwal Pemasangan</Text>
-            <View style={styles.scheduleInfo}>
-              <Text style={styles.scheduleText}>
-                📅 {customerData.installationDate || 'Menunggu jadwal'}
-              </Text>
-              <Text style={styles.scheduleText}>
-                ⏰ {customerData.installationTime || 'Menunggu waktu'}
-              </Text>
-            </View>
-          </View>
+              {/* Installation Details */}
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Jadwal Pemasangan</Text>
+                <View style={styles.scheduleInfo}>
+                  <Text style={styles.scheduleText}>
+                    📅 {customerData?.installationDate || 'Menunggu jadwal'}
+                  </Text>
+                  <Text style={styles.scheduleText}>
+                    ⏰ {customerData?.installationTime || 'Menunggu waktu'}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
 
           {/* Payment Breakdown */}
           <View style={styles.section}>

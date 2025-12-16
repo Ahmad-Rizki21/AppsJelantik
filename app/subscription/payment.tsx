@@ -27,7 +27,13 @@ interface PaymentCategory {
   methods: PaymentMethod[];
 }
 
+import { useLocalSearchParams } from 'expo-router';
+
 export default function PaymentScreen() {
+  const params = useLocalSearchParams();
+  const isInvoiceMode = params.mode === 'invoice';
+  const invoiceAmount = params.totalAmount ? parseInt(params.totalAmount.toString().replace(/[^0-9]/g, '')) : 0;
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
@@ -85,6 +91,8 @@ export default function PaymentScreen() {
   }, []);
 
   const loadData = async () => {
+    if (isInvoiceMode) return;
+    
     try {
       await CartService.initialize();
       const items = CartService.getCartItems();
@@ -132,7 +140,9 @@ export default function PaymentScreen() {
     router.push({
       pathname: '/subscription/order-summary',
       params: {
-        paymentMethod: selectedMethod
+        paymentMethod: selectedMethod,
+        mode: isInvoiceMode ? 'invoice' : 'subscription',
+        totalAmount: prices.total
       }
     });
   };
@@ -149,7 +159,7 @@ export default function PaymentScreen() {
       }
   };
 
-  if (!customerData) {
+  if (!customerData && !isInvoiceMode) {
     return (
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -182,70 +192,74 @@ export default function PaymentScreen() {
              <Text style={styles.amountDueValue}>{formatPrice(prices.total)}</Text>
         </View>
 
-        {/* Ringkasan Pesanan */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Ringkasan Pesanan</Text>
+        {/* Ringkasan Pesanan - Only show if NOT in invoice mode */ }
+        {!isInvoiceMode && (
+          <>
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Ringkasan Pesanan</Text>
 
-          {cartItems.map((item, index) => (
-            <View key={item.id} style={styles.orderItem}>
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemSpeed}>{item.speed}</Text>
-                <Text style={styles.itemPeriod}>/{item.activePeriod}</Text>
+              {cartItems.map((item, index) => (
+                <View key={item.id} style={styles.orderItem}>
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemSpeed}>{item.speed}</Text>
+                    <Text style={styles.itemPeriod}>/{item.activePeriod}</Text>
+                  </View>
+                  <Text style={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</Text>
+                </View>
+              ))}
+
+              <View style={styles.divider} />
+
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Subtotal</Text>
+                <Text style={styles.priceValue}>{formatPrice(prices.subtotal)}</Text>
               </View>
-              <Text style={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</Text>
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>PPN (11%)</Text>
+                <Text style={styles.priceValue}>{formatPrice(prices.tax)}</Text>
+              </View>
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Biaya Admin</Text>
+                <Text style={styles.priceValue}>{formatPrice(prices.admin)}</Text>
+              </View>
+              <View style={[styles.priceRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total Pembayaran</Text>
+                <Text style={styles.totalValue}>{formatPrice(prices.total)}</Text>
+              </View>
             </View>
-          ))}
 
-          <View style={styles.divider} />
-
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Subtotal</Text>
-            <Text style={styles.priceValue}>{formatPrice(prices.subtotal)}</Text>
-          </View>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>PPN (11%)</Text>
-            <Text style={styles.priceValue}>{formatPrice(prices.tax)}</Text>
-          </View>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Biaya Admin</Text>
-            <Text style={styles.priceValue}>{formatPrice(prices.admin)}</Text>
-          </View>
-          <View style={[styles.priceRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total Pembayaran</Text>
-            <Text style={styles.totalValue}>{formatPrice(prices.total)}</Text>
-          </View>
-        </View>
-
-        {/* Installation Schedule */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Jadwal Pemasangan</Text>
-          <View style={styles.scheduleInfo}>
-            <View style={styles.scheduleItem}>
-              <Ionicons name="calendar-outline" size={20} color="#6B7280" />
-              <Text style={styles.scheduleText}>
-                {customerData.installationDate || 'Belum dipilih'}
-              </Text>
+            {/* Installation Schedule */}
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Jadwal Pemasangan</Text>
+              <View style={styles.scheduleInfo}>
+                <View style={styles.scheduleItem}>
+                  <Ionicons name="calendar-outline" size={20} color="#6B7280" />
+                  <Text style={styles.scheduleText}>
+                    {customerData?.installationDate || 'Belum dipilih'}
+                  </Text>
+                </View>
+                <View style={styles.scheduleItem}>
+                  <Ionicons name="time-outline" size={20} color="#6B7280" />
+                  <Text style={styles.scheduleText}>
+                    {customerData?.installationTime || 'Belum dipilih'}
+                  </Text>
+                </View>
+              </View>
             </View>
-            <View style={styles.scheduleItem}>
-              <Ionicons name="time-outline" size={20} color="#6B7280" />
-              <Text style={styles.scheduleText}>
-                {customerData.installationTime || 'Belum dipilih'}
-              </Text>
-            </View>
-          </View>
-        </View>
 
-        {/* Customer Info */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Data Pelanggan</Text>
-          <View style={styles.customerInfo}>
-            <Text style={styles.customerName}>{customerData.name}</Text>
-            <Text style={styles.customerDetail}>NIK: {customerData.nik}</Text>
-            <Text style={styles.customerDetail}>Email: {customerData.email}</Text>
-            <Text style={styles.customerDetail}>Telepon: {customerData.phone}</Text>
-          </View>
-        </View>
+            {/* Customer Info */}
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Data Pelanggan</Text>
+              <View style={styles.customerInfo}>
+                <Text style={styles.customerName}>{customerData?.name}</Text>
+                <Text style={styles.customerDetail}>NIK: {customerData?.nik}</Text>
+                <Text style={styles.customerDetail}>Email: {customerData?.email}</Text>
+                <Text style={styles.customerDetail}>Telepon: {customerData?.phone}</Text>
+              </View>
+            </View>
+          </>
+        )}
 
         {/* Payment Methods Accordion */}
         <Text style={styles.sectionHeading}>PAYMENT METHOD</Text>
