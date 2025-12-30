@@ -10,9 +10,11 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Dimensions
+  Dimensions,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import CartService, { CartItem, CustomerData } from '../services/cartService';
 
 const { width } = Dimensions.get('window');
@@ -22,6 +24,8 @@ export default function CartScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isTimeModalVisible, setTimeModalVisible] = useState(false);
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  const [tempDate, setTempDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
 
   const timeSlots = [
@@ -56,18 +60,46 @@ export default function CartScreen() {
   };
 
   const pickDate = () => {
-    // In a real app, use DateTimePicker. For now, we simulate picking "Tomorrow"
+    // Set minimum date to tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateStr = `${tomorrow.getDate()}-${tomorrow.getMonth() + 1}-${tomorrow.getFullYear()}`;
-    setSelectedDate(dateStr);
-    saveCustomerData({ installationDate: dateStr });
+    setTempDate(tomorrow);
+    setDatePickerVisible(true);
+  };
+
+  const handleDateChange = (event: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === 'android') {
+      setDatePickerVisible(false);
+    }
+
+    if (event.type === 'set' && selected) {
+      // Format date as DD-MM-YYYY
+      const dateStr = `${selected.getDate()}-${selected.getMonth() + 1}-${selected.getFullYear()}`;
+      setSelectedDate(dateStr);
+      saveCustomerData({ installationDate: dateStr });
+      // Close picker on iOS after selection
+      if (Platform.OS === 'ios') {
+        setDatePickerVisible(false);
+      }
+    } else if (event.type === 'dismissed') {
+      setDatePickerVisible(false);
+    }
   };
 
   const saveCustomerData = async (data: Partial<CustomerData>) => {
     try {
-      const existingData = CartService.getCustomerData() || {};
-      await CartService.saveCustomerData({ ...existingData, ...data });
+      const existingData = CartService.getCustomerData();
+      const mergedData: CustomerData = {
+        nik: existingData?.nik || '',
+        name: existingData?.name || '',
+        email: existingData?.email || '',
+        phone: existingData?.phone || '',
+        address: existingData?.address || '',
+        installationDate: existingData?.installationDate || '',
+        installationTime: existingData?.installationTime || '',
+        ...data
+      };
+      await CartService.saveCustomerData(mergedData);
     } catch (error) {
       console.error('Error saving customer data:', error);
     }
@@ -331,6 +363,16 @@ export default function CartScreen() {
           </View>
         </View>
       </Modal>
+
+      {isDatePickerVisible && (
+        <DateTimePicker
+          value={tempDate}
+          mode="date"
+          display="default"
+          minimumDate={new Date(Date.now() + 24 * 60 * 60 * 1000)} // Minimum tomorrow
+          onChange={handleDateChange}
+        />
+      )}
     </SafeAreaView>
   );
 }
