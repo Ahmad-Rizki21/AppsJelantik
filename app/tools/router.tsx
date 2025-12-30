@@ -3,7 +3,6 @@ import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Animated,
     Modal,
@@ -91,7 +90,7 @@ export default function RouterSetupScreen() {
                 <View style={styles.sectionCard}>
                     <View style={styles.headerRow}>
                         <View style={styles.headerIconContainer}>
-                            <Ionicons name="router" size={28} color="#3B82F6" />
+                            <Ionicons name="wifi" size={28} color="#3B82F6" />
                         </View>
                         <View style={styles.headerTextContainer}>
                             <Text style={styles.sectionTitle}>Pengaturan Router/ONT</Text>
@@ -125,7 +124,7 @@ export default function RouterSetupScreen() {
                 />
 
                 {/* Settings Form */}
-                <Text style={styles.sectionLabel}>Ubah Pengaturan WiFi</Text>
+                {/* <Text style={styles.sectionLabel}>Ubah Pengaturan WiFi</Text>
                 
                 <FormTile icon="wifi" title="Nama SSID" subtitle="Nama jaringan WiFi Anda">
                     <CustomInput 
@@ -153,12 +152,12 @@ export default function RouterSetupScreen() {
                         secureTextEntry={obscureCurrentPassword}
                         onToggleSecure={() => setObscureCurrentPassword(!obscureCurrentPassword)}
                     />
-                </FormTile>
+                </FormTile> */}
 
                 <View style={{ height: 32 }} />
 
                 {/* Action Button */}
-                <TouchableOpacity 
+                {/* <TouchableOpacity 
                     style={[styles.actionButton, isConnecting && styles.disabledButton]} 
                     onPress={handleApplySettings}
                     disabled={isConnecting}
@@ -170,11 +169,11 @@ export default function RouterSetupScreen() {
                         </View>
                     ) : (
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="router" size={24} color="white" style={{ marginRight: 8 }} />
+                            <Ionicons name="wifi" size={24} color="white" style={{ marginRight: 8 }} />
                             <Text style={styles.actionButtonText}>Terapkan Pengaturan</Text>
                         </View>
                     )}
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 
                 <View style={{ height: 40 }} />
             </Animated.ScrollView>
