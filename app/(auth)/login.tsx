@@ -236,7 +236,13 @@ function LoginForm({
               value={loginData.password}
               onChangeText={(text) => setLoginData({ ...loginData, password: text })}
             />
-            <View style={{ height: 40 }} />
+            <View style={{ height: 12 }} />
+            <View style={{ alignItems: 'flex-end' }}>
+                <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
+                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
+            </View>
+            <View style={{ height: 28 }} />
 
             <PrimaryButton
               title={isLoggingIn ? "Memproses..." : "Sign in"}
@@ -426,11 +432,6 @@ function SocialLoginSection({
             >
                  <Image source={require('../../assets/images/google_logo.png')} style={{ width: 24, height: 24 }} />
             </TouchableOpacity>
-
-            {/* Facebook */}
-            <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-facebook" size={24} color="#1877F2" />
-            </TouchableOpacity>
         </View>
     )
 }
@@ -543,5 +544,10 @@ const styles = StyleSheet.create({
       color: '#1E3A8A',
       fontFamily: 'Poppins-SemiBold',
       marginLeft: 4,
-  }
+  },
+  forgotPasswordText: {
+      fontSize: 13,
+      color: '#1E3A8A',
+      fontFamily: 'Poppins-SemiBold',
+  },
 });

@@ -2,9 +2,9 @@
  * AuthService - Service untuk menangani autentikasi user dengan Supabase
  */
 
-import { supabase } from '../../lib/supabase';
-import { Session, User } from '@supabase/supabase-js';
 import type { AuthChangeEvent } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../../lib/supabase';
 
 export interface RegisterData {
   email: string;
@@ -231,6 +231,77 @@ class AuthService {
       };
     } catch (error: any) {
       return { success: false, message: error.message || 'Gagal login dengan Google' };
+    }
+  }
+
+  /**
+   * Kirim OTP untuk reset password ke email
+   * Menggunakan otp dengan type email_change untuk mendapatkan OTP
+   */
+  async sendPasswordResetOTP(email: string): Promise<AuthResponse> {
+    try {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return { success: false, message: 'Format email tidak valid' };
+      }
+
+      // Mengirim email reset password standar dari Supabase
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      return {
+        success: true,
+        message: 'Kode verifikasi telah dikirim ke email Anda. Silakan cek inbox atau folder spam.',
+      };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Gagal mengirim OTP' };
+    }
+  }
+
+  /**
+   * Fallback method jika table belum ada
+   */
+
+
+  /**
+   * Reset password dengan OTP dan password baru
+   */
+  async resetPasswordWithOTP(email: string, token: string, newPassword: string): Promise<AuthResponse> {
+    try {
+      if (newPassword.length < 8) {
+        return { success: false, message: 'Password minimal 8 karakter' };
+      }
+
+      // 1. Verifikasi OTP (Recovery Token)
+      // Ini akan meloginkan user jika sukses
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'recovery',
+      });
+
+      if (verifyError) {
+        return { success: false, message: 'Kode OTP tidak valid atau kadaluarsa. ' + verifyError.message };
+      }
+
+      // 2. Update password user yang sekarang sudah login
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (updateError) {
+        return { success: false, message: updateError.message };
+      }
+
+      return {
+        success: true,
+        message: 'Password berhasil diubah. Silakan login dengan password baru.',
+      };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Gagal reset password' };
     }
   }
 
