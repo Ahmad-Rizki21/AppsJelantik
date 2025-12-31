@@ -306,6 +306,53 @@ class AuthService {
   }
 
   /**
+   * Set password untuk user yang sudah login (misal: setelah OAuth)
+   * Berguna agar user bisa login dengan email + password selain OAuth
+   */
+  async setPassword(newPassword: string, confirmPassword: string): Promise<AuthResponse> {
+    try {
+      if (newPassword.length < 8) {
+        return { success: false, message: 'Password minimal 8 karakter' };
+      }
+
+      if (newPassword !== confirmPassword) {
+        return { success: false, message: 'Password dan konfirmasi password tidak cocok' };
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      return {
+        success: true,
+        message: 'Password berhasil diset. Sekarang Anda bisa login dengan email + password.',
+        user: this.currentUser,
+        session: this.currentSession,
+      };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Gagal mengset password' };
+    }
+  }
+
+  /**
+   * Cek apakah user sudah punya password (bukan OAuth-only)
+   */
+  hasPassword(): boolean {
+    // Cek dari app_metadata atau user_metadata
+    // User OAuth-only biasanya punya provider di app_metadata
+    if (!this.currentUser) return false;
+
+    const identities = this.currentUser.app_metadata?.provider;
+    // Jika user punya password, identities akan undefined atau 'email'
+    // Jika OAuth-only, identities akan 'google' atau provider lain
+    return identities === undefined || identities === 'email';
+  }
+
+  /**
    * Logout
    */
   async logout(): Promise<{ success: boolean; message: string }> {

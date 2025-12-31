@@ -1,24 +1,34 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AuthService from '../services/authService';
 
 export default function SettingsScreen() {
+    const [hasPassword, setHasPassword] = useState(true); // Default true to avoid flash
+
+    useEffect(() => {
+        // Cek apakah user sudah punya password
+        setHasPassword(AuthService.hasPassword());
+    }, []);
+
     const handleLogout = () => {
         Alert.alert(
             "Logout",
             "Apakah Anda yakin ingin keluar?",
             [
                 { text: "Batal", style: "cancel" },
-                { 
-                    text: "Keluar", 
+                {
+                    text: "Keluar",
                     style: "destructive",
                     onPress: async () => {
-                        // Clear session or token if needed
-                        await AsyncStorage.setItem('isLoggedIn', 'false'); // Example
-                        router.replace('/(auth)/login');
+                        const result = await AuthService.logout();
+                        if (result.success) {
+                            router.replace('/(auth)/login');
+                        } else {
+                            Alert.alert("Gagal", result.message);
+                        }
                     }
                 }
             ]
@@ -53,6 +63,12 @@ export default function SettingsScreen() {
                 <Section title="My Data">
                     <SettingTile title="Profile Data" onPress={() => navigateTo('profile-data')} />
                     <Separator />
+                    {!hasPassword && (
+                        <>
+                            <SettingTile title="Set Password" onPress={() => router.push('/settings/set-password' as any)} />
+                            <Separator />
+                        </>
+                    )}
                     <SettingTile title="Help Center" onPress={() => navigateTo('help-center')} />
                 </Section>
 
