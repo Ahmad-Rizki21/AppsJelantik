@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CustomAlert from '../../components/CustomAlert';
 import { GOOGLE_WEB_CLIENT_ID } from '../../lib/supabase';
 import AuthService, { LoginData, RegisterData } from '../services/authService';
 
@@ -25,6 +25,26 @@ export default function LoginScreen() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  // Custom Alert State
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'warning' | 'info',
+    onConfirm: undefined as (() => void) | undefined,
+    confirmText: 'OK',
+    cancelText: 'Cancel'
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', onConfirm?: () => void, confirmText = 'OK', cancelText = 'Cancel') => {
+    setAlertConfig({ title, message, type, onConfirm, confirmText, cancelText });
+    setAlertVisible(true);
+  };
+
+  const closeAlert = () => {
+    setAlertVisible(false);
+  };
+
   // Setup Google Sign-In
   useEffect(() => {
     GoogleSignin.configure({
@@ -38,18 +58,18 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!loginData.email) {
-      Alert.alert('Error', 'Email wajib diisi');
+      showAlert('Error', 'Email wajib diisi', 'error');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(loginData.email)) {
-      Alert.alert('Error', 'Format email tidak valid');
+      showAlert('Error', 'Format email tidak valid', 'error');
       return;
     }
 
     if (!loginData.password) {
-      Alert.alert('Error', 'Password wajib diisi');
+      showAlert('Error', 'Password wajib diisi', 'error');
       return;
     }
 
@@ -61,10 +81,10 @@ export default function LoginScreen() {
       if (result.success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Login Gagal', result.message);
+        showAlert('Login Gagal', result.message, 'error');
       }
     } catch (error) {
-      Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
+      showAlert('Error', 'Terjadi kesalahan. Silakan coba lagi.', 'error');
     } finally {
       setIsLoggingIn(false);
     }
@@ -72,28 +92,28 @@ export default function LoginScreen() {
 
   const handleRegister = async () => {
     if (!registerData.email) {
-      Alert.alert('Error', 'Email wajib diisi');
+      showAlert('Error', 'Email wajib diisi', 'error');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(registerData.email)) {
-      Alert.alert('Error', 'Format email tidak valid');
+      showAlert('Error', 'Format email tidak valid', 'error');
       return;
     }
 
     if (!registerData.password) {
-      Alert.alert('Error', 'Password wajib diisi');
+      showAlert('Error', 'Password wajib diisi', 'error');
       return;
     }
 
     if (registerData.password.length < 8) {
-      Alert.alert('Error', 'Password minimal 8 karakter');
+      showAlert('Error', 'Password minimal 8 karakter', 'error');
       return;
     }
 
     if (registerData.password !== registerData.confirmPassword) {
-      Alert.alert('Error', 'Password tidak cocok');
+      showAlert('Error', 'Password tidak cocok', 'error');
       return;
     }
 
@@ -113,13 +133,13 @@ export default function LoginScreen() {
             params: { email: registerData.email }
           });
         } else {
-          Alert.alert('Registrasi Berhasil', 'Silakan cek email untuk verifikasi.');
+          showAlert('Registrasi Berhasil', 'Silakan cek email untuk verifikasi.', 'success');
         }
       } else {
-        Alert.alert('Registrasi Gagal', result.message);
+        showAlert('Registrasi Gagal', result.message, 'error');
       }
     } catch (error) {
-      Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
+      showAlert('Error', 'Terjadi kesalahan. Silakan coba lagi.', 'error');
     } finally {
       setIsRegistering(false);
     }
@@ -129,7 +149,7 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      <View style={{ height: 120 }} />
+      <View style={{ height: 40 }} />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -151,6 +171,7 @@ export default function LoginScreen() {
                     loginData={loginData}
                     setLoginData={setLoginData}
                     isLoggingIn={isLoggingIn}
+                    showAlert={showAlert}
                 />
             ) : (
                 <RegisterForm
@@ -159,12 +180,26 @@ export default function LoginScreen() {
                   setRegisterData={setRegisterData}
                   isRegistering={isRegistering}
                   onLoginClick={() => setActiveTab('login')}
+                  showAlert={showAlert}
                 />
             )}
         </View>
 
+
+
       </ScrollView>
       </KeyboardAvoidingView>
+
+      <CustomAlert
+        visible={alertVisible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={closeAlert}
+        onConfirm={alertConfig.onConfirm}
+        confirmText={alertConfig.confirmText}
+        cancelText={alertConfig.cancelText}
+      />
     </SafeAreaView>
   );
 }
@@ -174,13 +209,15 @@ function LoginForm({
   onRegisterClick,
   loginData,
   setLoginData,
-  isLoggingIn
+  isLoggingIn,
+  showAlert
 }: {
   onLogin: () => void;
   onRegisterClick: () => void;
   loginData: LoginData;
   setLoginData: React.Dispatch<React.SetStateAction<LoginData>>;
   isLoggingIn: boolean;
+  showAlert: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info', onConfirm?: () => void, confirmText?: string, cancelText?: string) => void;
 }) {
     const [isSigningInWithGoogle, setIsSigningInWithGoogle] = useState(false);
 
@@ -193,27 +230,41 @@ function LoginForm({
         const idToken = tokens.idToken;
 
         if (!idToken) {
-          Alert.alert('Error', 'Gagal mendapatkan Google ID Token');
+          showAlert('Error', 'Gagal mendapatkan Google ID Token', 'error');
           return;
         }
 
         const result = await AuthService.loginWithGoogle(idToken);
 
         if (result.success) {
-          router.replace('/(tabs)');
+          // Cek apakah user sudah punya password
+          // Jika belum, tawarkan untuk set password
+          if (!AuthService.hasPassword()) {
+            // Show alert dan navigasi ke set password
+            showAlert(
+              'Login Berhasil',
+              'Anda login dengan Google. Ingin membuat password untuk login dengan email juga?',
+              'info',
+              () => router.replace('/settings/set-password'),
+              'Buat Password',
+              'Nanti Saja'
+            );
+          } else {
+            router.replace('/(tabs)');
+          }
         } else {
-          Alert.alert('Google Sign-In Gagal', result.message);
+          showAlert('Google Sign-In Gagal', result.message, 'error');
         }
       } catch (error: any) {
         if (error.code === statusCodes.SIGN_IN_CANCELLED) {
           console.log('Google Sign-In cancelled');
         } else if (error.code === statusCodes.IN_PROGRESS) {
-          Alert.alert('Error', 'Sign-in sedang berjalan');
+          showAlert('Error', 'Sign-in sedang berjalan', 'warning');
         } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-          Alert.alert('Error', 'Google Play Services tidak tersedia');
+          showAlert('Error', 'Google Play Services tidak tersedia', 'error');
         } else {
           console.error('Google Sign-In error:', error);
-          Alert.alert('Error', 'Gagal login dengan Google');
+          showAlert('Error', 'Gagal login dengan Google', 'error');
         }
       } finally {
         setIsSigningInWithGoogle(false);
@@ -275,13 +326,15 @@ function RegisterForm({
   registerData,
   setRegisterData,
   isRegistering,
-  onLoginClick
+  onLoginClick,
+  showAlert
 }: {
   onRegister: () => void;
   registerData: RegisterData;
   setRegisterData: React.Dispatch<React.SetStateAction<RegisterData>>;
   isRegistering: boolean;
   onLoginClick: () => void;
+  showAlert: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info', onConfirm?: () => void, confirmText?: string, cancelText?: string) => void;
 }) {
     const [isSigningInWithGoogle, setIsSigningInWithGoogle] = useState(false);
 
@@ -294,27 +347,41 @@ function RegisterForm({
         const idToken = tokens.idToken;
 
         if (!idToken) {
-          Alert.alert('Error', 'Gagal mendapatkan Google ID Token');
+          showAlert('Error', 'Gagal mendapatkan Google ID Token', 'error');
           return;
         }
 
         const result = await AuthService.loginWithGoogle(idToken);
 
         if (result.success) {
-          router.replace('/(tabs)');
+          // Cek apakah user sudah punya password
+          // Jika belum, tawarkan untuk set password
+          if (!AuthService.hasPassword()) {
+            // Show alert dan navigasi ke set password
+            showAlert(
+              'Login Berhasil',
+              'Anda login dengan Google. Ingin membuat password untuk login dengan email juga?',
+              'info',
+              () => router.replace('/settings/set-password'),
+              'Buat Password',
+              'Nanti Saja'
+            );
+          } else {
+            router.replace('/(tabs)');
+          }
         } else {
-          Alert.alert('Google Sign-In Gagal', result.message);
+          showAlert('Google Sign-In Gagal', result.message, 'error');
         }
       } catch (error: any) {
         if (error.code === statusCodes.SIGN_IN_CANCELLED) {
           console.log('Google Sign-In cancelled');
         } else if (error.code === statusCodes.IN_PROGRESS) {
-          Alert.alert('Error', 'Sign-in sedang berjalan');
+          showAlert('Error', 'Sign-in sedang berjalan', 'warning');
         } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-          Alert.alert('Error', 'Google Play Services tidak tersedia');
+          showAlert('Error', 'Google Play Services tidak tersedia', 'error');
         } else {
           console.error('Google Sign-In error:', error);
-          Alert.alert('Error', 'Gagal login dengan Google');
+          showAlert('Error', 'Gagal login dengan Google', 'error');
         }
       } finally {
         setIsSigningInWithGoogle(false);
@@ -330,21 +397,21 @@ function RegisterForm({
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            <View style={{ height: 20 }} />
+            <View style={{ height: 12 }} />
             <CustomTextField
               hint="Password"
               secureTextEntry
               value={registerData.password}
               onChangeText={(text) => setRegisterData({ ...registerData, password: text })}
             />
-            <View style={{ height: 20 }} />
+            <View style={{ height: 12 }} />
             <CustomTextField
               hint="Confirm Password"
               secureTextEntry
               value={registerData.confirmPassword}
               onChangeText={(text) => setRegisterData({ ...registerData, confirmPassword: text })}
             />
-            <View style={{ height: 40 }} />
+            <View style={{ height: 24 }} />
 
             <PrimaryButton
               title={isRegistering ? "Memproses..." : "Sign up"}
@@ -352,16 +419,16 @@ function RegisterForm({
               disabled={isRegistering}
             />
 
-            <View style={{ height: 40 }} />
+            <View style={{ height: 24 }} />
             <DividerWithText text="- Or sign up with -" />
-            <View style={{ height: 20 }} />
+            <View style={{ height: 16 }} />
 
             <SocialLoginSection
               onGoogleSignIn={handleGoogleSignIn}
               isGoogleSigningIn={isSigningInWithGoogle}
             />
 
-            <View style={{ height: 40 }} />
+            <View style={{ height: 20 }} />
             <View style={styles.bottomLinkContainer}>
                 <Text style={styles.bottomLinkText}>Already have an account? </Text>
                 <TouchableOpacity onPress={onLoginClick}>
@@ -469,7 +536,7 @@ const styles = StyleSheet.create({
       marginBottom: 0,
   },
   formContainer: {
-    paddingHorizontal: 40,
+    paddingHorizontal: 16,
     paddingVertical: 20,
   },
   inputContainer: {
