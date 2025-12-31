@@ -1,7 +1,10 @@
 /**
- * AuthService - Service untuk menangani autentikasi user (UI Only)
- * Untuk demo/testing tanpa backend
+ * AuthService - Service untuk menangani autentikasi user dengan Supabase
  */
+
+import { supabase } from '../../lib/supabase';
+import { Session, User } from '@supabase/supabase-js';
+import type { AuthChangeEvent } from '@supabase/supabase-js';
 
 export interface RegisterData {
   email: string;
@@ -16,14 +19,32 @@ export interface LoginData {
   password: string;
 }
 
+export interface OTPData {
+  email: string;
+  token: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  user?: User | null;
+  session?: Session | null;
+  needsVerification?: boolean; // True jika user perlu verifikasi email
+}
+
 class AuthService {
   private static instance: AuthService;
+  private currentUser: User | null = null;
+  private currentSession: Session | null = null;
 
-  // Simpan OTP sementara (untuk demo/development)
-  private currentOtp: string = '';
-  private currentEmail: string = '';
-
-  private constructor() {}
+  private constructor() {
+    // Listen to auth changes
+    supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+      console.log('Auth state changed:', event);
+      this.currentSession = session;
+      this.currentUser = session?.user ?? null;
+    });
+  }
 
   static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -32,123 +53,204 @@ class AuthService {
     return AuthService.instance;
   }
 
-  /**
-   * Generate random 6-digit OTP
-   */
-  private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  getCurrentUser(): User | null {
+    return this.currentUser;
+  }
+
+  getCurrentSession(): Session | null {
+    return this.currentSession;
+  }
+
+  isAuthenticated(): boolean {
+    return this.currentUser !== null;
   }
 
   /**
-   * Kirim OTP ke email user
-   * Untuk demo: OTP akan ditampilkan di console/alert
+   * Register user baru dengan email dan password
+   * Mengirimkan OTP ke email untuk verifikasi
    */
-  async sendOtp(email: string): Promise<boolean> {
+  async registerWithEmail(data: RegisterData): Promise<AuthResponse> {
     try {
-      // Generate OTP baru
-      this.currentOtp = this.generateOtp();
-      this.currentEmail = email;
-
-      // Tampilkan OTP di console untuk testing
-      console.log('='.repeat(50));
-      console.log('OTP VERIFICATION - DEMO MODE');
-      console.log('Email:', email);
-      console.log('OTP Code:', this.currentOtp);
-      console.log('='.repeat(50));
-
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  /**
-   * Verifikasi OTP
-   * Untuk demo: validasi dengan currentOtp
-   */
-  async verifyOtp(email: string, otp: string): Promise<boolean> {
-    try {
-      // Simulasi verifikasi
-      // Di production ini akan memanggil API
-      return this.currentOtp === otp && this.currentEmail === email;
-    } catch (error) {
-      console.error('Error verifying OTP:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Register user baru dengan OTP
-   */
-  async registerWithEmail(data: RegisterData): Promise<{ success: boolean; message: string }> {
-    try {
-      // Validasi password
       if (data.password !== data.confirmPassword) {
-        return {
-          success: false,
-          message: 'Password dan konfirmasi password tidak cocok',
-        };
+        return { success: false, message: 'Password dan konfirmasi password tidak cocok' };
       }
 
       if (data.password.length < 8) {
-        return {
-          success: false,
-          message: 'Password minimal 8 karakter',
-        };
+        return { success: false, message: 'Password minimal 8 karakter' };
       }
 
-      // Validasi email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(data.email)) {
+        return { success: false, message: 'Format email tidak valid' };
+      }
+
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.name,
+            phone: data.phone,
+          },
+          emailRedirectTo: undefined, // Disable auto redirect, use manual OTP
+        },
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      // Cek apakah user perlu verifikasi email
+      if (authData.user && !authData.session) {
+        // User dibuat tapi belum verified - email OTP dikirim
         return {
-          success: false,
-          message: 'Format email tidak valid',
+          success: true,
+          message: 'Kode verifikasi telah dikirim ke email Anda. Silakan cek inbox.',
+          user: authData.user,
+          session: null,
+          needsVerification: true,
         };
       }
 
-      // Kirim OTP untuk verifikasi
-      const otpSent = await this.sendOtp(data.email);
+      this.currentUser = authData.user;
+      this.currentSession = authData.session;
 
-      if (!otpSent) {
-        return {
-          success: false,
-          message: 'Gagal mengirim kode OTP. Silakan coba lagi.',
-        };
+      return {
+        success: true,
+        message: 'Registrasi berhasil',
+        user: authData.user,
+        session: authData.session,
+      };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Terjadi kesalahan' };
+    }
+  }
+
+  /**
+   * Resend OTP ke email
+   */
+  async resendOTP(email: string): Promise<AuthResponse> {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
       }
 
       return {
         success: true,
-        message: 'Kode OTP telah dikirim ke email Anda',
+        message: 'Kode verifikasi baru telah dikirim ke email Anda.',
       };
-    } catch (error) {
-      console.error('Error registering:', error);
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Gagal mengirim ulang kode' };
+    }
+  }
+
+  /**
+   * Verifikasi OTP dengan email dan token
+   */
+  async verifyOTP(email: string, token: string): Promise<AuthResponse> {
+    try {
+      const { data: authData, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'signup',
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      this.currentUser = authData.user;
+      this.currentSession = authData.session;
+
       return {
-        success: false,
-        message: 'Terjadi kesalahan. Silakan coba lagi.',
+        success: true,
+        message: 'Verifikasi berhasil!',
+        user: authData.user,
+        session: authData.session,
       };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Kode verifikasi tidak valid' };
     }
   }
 
   /**
    * Login dengan email dan password
    */
-  async login(data: LoginData): Promise<{ success: boolean; message: string; user?: any }> {
-    // TODO: Implementasi login dengan backend
-    return {
-      success: false,
-      message: 'Fitur login akan segera tersedia',
-    };
+  async login(data: LoginData): Promise<AuthResponse> {
+    try {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      this.currentUser = authData.user;
+      this.currentSession = authData.session;
+
+      return {
+        success: true,
+        message: 'Login berhasil',
+        user: authData.user,
+        session: authData.session,
+      };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Terjadi kesalahan' };
+    }
   }
 
   /**
    * Login dengan Google
    */
-  async loginWithGoogle(): Promise<{ success: boolean; message: string; user?: any }> {
-    // TODO: Implementasi Google Sign-In
-    return {
-      success: false,
-      message: 'Google Sign-In akan segera tersedia',
-    };
+  async loginWithGoogle(idToken: string): Promise<AuthResponse> {
+    try {
+      const { data: authData, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken,
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      this.currentUser = authData.user;
+      this.currentSession = authData.session;
+
+      return {
+        success: true,
+        message: 'Login dengan Google berhasil',
+        user: authData.user,
+        session: authData.session,
+      };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Gagal login dengan Google' };
+    }
+  }
+
+  /**
+   * Logout
+   */
+  async logout(): Promise<{ success: boolean; message: string }> {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      this.currentUser = null;
+      this.currentSession = null;
+
+      return { success: true, message: 'Logout berhasil' };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Terjadi kesalahan' };
+    }
   }
 }
 

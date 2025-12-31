@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AuthService, { RegisterData } from '../services/authService';
+import { GOOGLE_WEB_CLIENT_ID } from '../../lib/supabase';
+import AuthService, { LoginData, RegisterData } from '../services/authService';
 
 export default function LoginScreen() {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -16,19 +18,59 @@ export default function LoginScreen() {
     name: '',
     phone: '',
   });
+  const [loginData, setLoginData] = useState<LoginData>({
+    email: '',
+    password: '',
+  });
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Setup Google Sign-In
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+    });
+  }, []);
 
   const handleBack = () => {
     router.replace('/(auth)/onboarding');
   };
 
-  const handleLogin = () => {
-    // Implement login logic here
-    router.replace('/(tabs)');
+  const handleLogin = async () => {
+    if (!loginData.email) {
+      Alert.alert('Error', 'Email wajib diisi');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(loginData.email)) {
+      Alert.alert('Error', 'Format email tidak valid');
+      return;
+    }
+
+    if (!loginData.password) {
+      Alert.alert('Error', 'Password wajib diisi');
+      return;
+    }
+
+    setIsLoggingIn(true);
+
+    try {
+      const result = await AuthService.login(loginData);
+
+      if (result.success) {
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('Login Gagal', result.message);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleRegister = async () => {
-    // Validate inputs
     if (!registerData.email) {
       Alert.alert('Error', 'Email wajib diisi');
       return;
@@ -61,9 +103,18 @@ export default function LoginScreen() {
       const result = await AuthService.registerWithEmail(registerData);
 
       if (result.success) {
-        // Navigate to OTP verification
-        const emailEncoded = encodeURIComponent(registerData.email);
-        router.push(`/auth/otp-verification?email=${emailEncoded}`);
+        if (result.session) {
+          // Auto-login jika email confirmation dimatikan di Supabase
+          router.replace('/(tabs)');
+        } else if (result.needsVerification) {
+          // Navigate ke OTP verification screen
+          router.push({
+            pathname: '/(auth)/verify-otp',
+            params: { email: registerData.email }
+          });
+        } else {
+          Alert.alert('Registrasi Berhasil', 'Silakan cek email untuk verifikasi.');
+        }
       } else {
         Alert.alert('Registrasi Gagal', result.message);
       }
@@ -77,12 +128,12 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      
+
       <View style={{ height: 120 }} />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+
         {/* Header */}
         <View style={styles.header}>
             <Image source={require('../../assets/images/Jelantik_Logo.png')} style={styles.logo} resizeMode="contain" />
@@ -94,9 +145,12 @@ export default function LoginScreen() {
         {/* content */}
         <View style={styles.formContainer}>
             {activeTab === 'login' ? (
-                <LoginForm 
-                    onLogin={handleLogin} 
-                    onRegisterClick={() => setActiveTab('register')} 
+                <LoginForm
+                    onLogin={handleLogin}
+                    onRegisterClick={() => setActiveTab('register')}
+                    loginData={loginData}
+                    setLoginData={setLoginData}
+                    isLoggingIn={isLoggingIn}
                 />
             ) : (
                 <RegisterForm
@@ -115,21 +169,89 @@ export default function LoginScreen() {
   );
 }
 
-function LoginForm({ onLogin, onRegisterClick }: { onLogin: () => void, onRegisterClick: () => void }) {
+function LoginForm({
+  onLogin,
+  onRegisterClick,
+  loginData,
+  setLoginData,
+  isLoggingIn
+}: {
+  onLogin: () => void;
+  onRegisterClick: () => void;
+  loginData: LoginData;
+  setLoginData: React.Dispatch<React.SetStateAction<LoginData>>;
+  isLoggingIn: boolean;
+}) {
+    const [isSigningInWithGoogle, setIsSigningInWithGoogle] = useState(false);
+
+    const handleGoogleSignIn = async () => {
+      try {
+        setIsSigningInWithGoogle(true);
+        await GoogleSignin.hasPlayServices();
+        const userInfo = await GoogleSignin.signIn();
+        const tokens = await GoogleSignin.getTokens();
+        const idToken = tokens.idToken;
+
+        if (!idToken) {
+          Alert.alert('Error', 'Gagal mendapatkan Google ID Token');
+          return;
+        }
+
+        const result = await AuthService.loginWithGoogle(idToken);
+
+        if (result.success) {
+          router.replace('/(tabs)');
+        } else {
+          Alert.alert('Google Sign-In Gagal', result.message);
+        }
+      } catch (error: any) {
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+          console.log('Google Sign-In cancelled');
+        } else if (error.code === statusCodes.IN_PROGRESS) {
+          Alert.alert('Error', 'Sign-in sedang berjalan');
+        } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          Alert.alert('Error', 'Google Play Services tidak tersedia');
+        } else {
+          console.error('Google Sign-In error:', error);
+          Alert.alert('Error', 'Gagal login dengan Google');
+        }
+      } finally {
+        setIsSigningInWithGoogle(false);
+      }
+    };
+
     return (
         <View>
-            <CustomTextField hint="Email" />
+            <CustomTextField
+              hint="Email"
+              value={loginData.email}
+              onChangeText={(text) => setLoginData({ ...loginData, email: text })}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
             <View style={{ height: 20 }} />
-            <CustomTextField hint="Password" secureTextEntry />
+            <CustomTextField
+              hint="Password"
+              secureTextEntry
+              value={loginData.password}
+              onChangeText={(text) => setLoginData({ ...loginData, password: text })}
+            />
             <View style={{ height: 40 }} />
-            
-            <PrimaryButton title="Sign in" onPress={onLogin} />
-            
+
+            <PrimaryButton
+              title={isLoggingIn ? "Memproses..." : "Sign in"}
+              onPress={onLogin}
+              disabled={isLoggingIn}
+            />
+
             <View style={{ height: 40 }} />
             <DividerWithText text="- Or sign in with -" />
             <View style={{ height: 20 }} />
-            
-            <SocialLoginSection />
+
+            <SocialLoginSection
+              onGoogleSignIn={handleGoogleSignIn}
+              isGoogleSigningIn={isSigningInWithGoogle}
+            />
 
             <View style={{ height: 40 }} />
             <View style={styles.bottomLinkContainer}>
@@ -155,6 +277,44 @@ function RegisterForm({
   isRegistering: boolean;
   onLoginClick: () => void;
 }) {
+    const [isSigningInWithGoogle, setIsSigningInWithGoogle] = useState(false);
+
+    const handleGoogleSignIn = async () => {
+      try {
+        setIsSigningInWithGoogle(true);
+        await GoogleSignin.hasPlayServices();
+        const userInfo = await GoogleSignin.signIn();
+        const tokens = await GoogleSignin.getTokens();
+        const idToken = tokens.idToken;
+
+        if (!idToken) {
+          Alert.alert('Error', 'Gagal mendapatkan Google ID Token');
+          return;
+        }
+
+        const result = await AuthService.loginWithGoogle(idToken);
+
+        if (result.success) {
+          router.replace('/(tabs)');
+        } else {
+          Alert.alert('Google Sign-In Gagal', result.message);
+        }
+      } catch (error: any) {
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+          console.log('Google Sign-In cancelled');
+        } else if (error.code === statusCodes.IN_PROGRESS) {
+          Alert.alert('Error', 'Sign-in sedang berjalan');
+        } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          Alert.alert('Error', 'Google Play Services tidak tersedia');
+        } else {
+          console.error('Google Sign-In error:', error);
+          Alert.alert('Error', 'Gagal login dengan Google');
+        }
+      } finally {
+        setIsSigningInWithGoogle(false);
+      }
+    };
+
     return (
         <View>
             <CustomTextField
@@ -190,7 +350,10 @@ function RegisterForm({
             <DividerWithText text="- Or sign up with -" />
             <View style={{ height: 20 }} />
 
-            <SocialLoginSection />
+            <SocialLoginSection
+              onGoogleSignIn={handleGoogleSignIn}
+              isGoogleSigningIn={isSigningInWithGoogle}
+            />
 
             <View style={{ height: 40 }} />
             <View style={styles.bottomLinkContainer}>
@@ -246,14 +409,24 @@ function PrimaryButton({ title, onPress, disabled }: { title: string, onPress: (
     )
 }
 
-function SocialLoginSection() {
+function SocialLoginSection({
+  onGoogleSignIn,
+  isGoogleSigningIn
+}: {
+  onGoogleSignIn: () => void;
+  isGoogleSigningIn: boolean;
+}) {
     return (
         <View style={styles.socialContainer}>
             {/* Google */}
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity
+              style={styles.socialButton}
+              onPress={onGoogleSignIn}
+              disabled={isGoogleSigningIn}
+            >
                  <Image source={require('../../assets/images/google_logo.png')} style={{ width: 24, height: 24 }} />
             </TouchableOpacity>
-            
+
             {/* Facebook */}
             <TouchableOpacity style={styles.socialButton}>
                 <Ionicons name="logo-facebook" size={24} color="#1877F2" />
@@ -317,7 +490,7 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   primaryButton: {
-    backgroundColor: '#1E3A8A', 
+    backgroundColor: '#1E3A8A',
     borderRadius: 8,
     height: 56,
     justifyContent: 'center',
