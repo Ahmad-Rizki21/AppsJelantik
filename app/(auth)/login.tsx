@@ -6,6 +6,7 @@ import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, Te
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomAlert from '../../components/CustomAlert';
 import { GOOGLE_WEB_CLIENT_ID } from '../../lib/supabase';
+import { api } from '../../lib/apiService';
 import AuthService, { LoginData, RegisterData } from '../services/authService';
 
 export default function LoginScreen() {
@@ -33,11 +34,12 @@ export default function LoginScreen() {
     type: 'info' as 'success' | 'error' | 'warning' | 'info',
     onConfirm: undefined as (() => void) | undefined,
     confirmText: 'OK',
-    cancelText: 'Cancel'
+    cancelText: 'Cancel',
+    onCancel: undefined as (() => void) | undefined,
   });
 
-  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', onConfirm?: () => void, confirmText = 'OK', cancelText = 'Cancel') => {
-    setAlertConfig({ title, message, type, onConfirm, confirmText, cancelText });
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', onConfirm?: () => void, confirmText = 'OK', cancelText = 'Cancel', onCancel?: () => void) => {
+    setAlertConfig({ title, message, type, onConfirm, confirmText, cancelText, onCancel });
     setAlertVisible(true);
   };
 
@@ -79,6 +81,15 @@ export default function LoginScreen() {
       const result = await AuthService.login(loginData);
 
       if (result.success) {
+        // Sync ke backend (auto-create user di PostgreSQL)
+        try {
+          console.log('[Login] Syncing user to backend...');
+          await api.users.getMe();
+          console.log('[Login] User synced successfully');
+        } catch (syncError: any) {
+          console.warn('[Login] Sync failed (non-blocking):', syncError.message);
+          // Lanjut saja walau sync gagal
+        }
         router.replace('/(tabs)');
       } else {
         showAlert('Login Gagal', result.message, 'error');
@@ -99,6 +110,11 @@ export default function LoginScreen() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(registerData.email)) {
       showAlert('Error', 'Format email tidak valid', 'error');
+      return;
+    }
+
+    if (!registerData.name) {
+      showAlert('Error', 'Full Name wajib diisi', 'error');
       return;
     }
 
@@ -125,6 +141,14 @@ export default function LoginScreen() {
       if (result.success) {
         if (result.session) {
           // Auto-login jika email confirmation dimatikan di Supabase
+          // Sync ke backend sebelum navigate
+          try {
+            console.log('[Register] Syncing user to backend...');
+            await api.users.getMe();
+            console.log('[Register] User synced successfully');
+          } catch (syncError: any) {
+            console.warn('[Register] Sync failed (non-blocking):', syncError.message);
+          }
           router.replace('/(tabs)');
         } else if (result.needsVerification) {
           // Navigate ke OTP verification screen
@@ -195,7 +219,10 @@ export default function LoginScreen() {
         title={alertConfig.title}
         message={alertConfig.message}
         type={alertConfig.type}
-        onClose={closeAlert}
+        onClose={() => {
+          closeAlert();
+          if (alertConfig.onCancel) alertConfig.onCancel();
+        }}
         onConfirm={alertConfig.onConfirm}
         confirmText={alertConfig.confirmText}
         cancelText={alertConfig.cancelText}
@@ -217,7 +244,7 @@ function LoginForm({
   loginData: LoginData;
   setLoginData: React.Dispatch<React.SetStateAction<LoginData>>;
   isLoggingIn: boolean;
-  showAlert: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info', onConfirm?: () => void, confirmText?: string, cancelText?: string) => void;
+  showAlert: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info', onConfirm?: () => void, confirmText?: string, cancelText?: string, onCancel?: () => void) => void;
 }) {
     const [isSigningInWithGoogle, setIsSigningInWithGoogle] = useState(false);
 
@@ -237,6 +264,16 @@ function LoginForm({
         const result = await AuthService.loginWithGoogle(idToken);
 
         if (result.success) {
+          // Sync ke backend (auto-create user di PostgreSQL)
+          try {
+            console.log('[Google] Syncing user to backend...');
+            await api.users.getMe();
+            console.log('[Google] User synced successfully');
+          } catch (syncError: any) {
+            console.warn('[Google] Sync failed (non-blocking):', syncError.message);
+            // Lanjut saja walau sync gagal
+          }
+
           // Cek apakah user sudah punya password
           // Jika belum, tawarkan untuk set password
           if (!AuthService.hasPassword()) {
@@ -247,7 +284,8 @@ function LoginForm({
               'info',
               () => router.replace('/settings/set-password'),
               'Buat Password',
-              'Nanti Saja'
+              'Nanti Saja',
+              () => router.replace('/(tabs)')
             );
           } else {
             router.replace('/(tabs)');
@@ -334,7 +372,7 @@ function RegisterForm({
   setRegisterData: React.Dispatch<React.SetStateAction<RegisterData>>;
   isRegistering: boolean;
   onLoginClick: () => void;
-  showAlert: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info', onConfirm?: () => void, confirmText?: string, cancelText?: string) => void;
+  showAlert: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info', onConfirm?: () => void, confirmText?: string, cancelText?: string, onCancel?: () => void) => void;
 }) {
     const [isSigningInWithGoogle, setIsSigningInWithGoogle] = useState(false);
 
@@ -354,6 +392,16 @@ function RegisterForm({
         const result = await AuthService.loginWithGoogle(idToken);
 
         if (result.success) {
+          // Sync ke backend (auto-create user di PostgreSQL)
+          try {
+            console.log('[Google] Syncing user to backend...');
+            await api.users.getMe();
+            console.log('[Google] User synced successfully');
+          } catch (syncError: any) {
+            console.warn('[Google] Sync failed (non-blocking):', syncError.message);
+            // Lanjut saja walau sync gagal
+          }
+
           // Cek apakah user sudah punya password
           // Jika belum, tawarkan untuk set password
           if (!AuthService.hasPassword()) {
@@ -364,7 +412,8 @@ function RegisterForm({
               'info',
               () => router.replace('/settings/set-password'),
               'Buat Password',
-              'Nanti Saja'
+              'Nanti Saja',
+              () => router.replace('/(tabs)')
             );
           } else {
             router.replace('/(tabs)');
@@ -396,6 +445,12 @@ function RegisterForm({
               onChangeText={(text) => setRegisterData({ ...registerData, email: text })}
               keyboardType="email-address"
               autoCapitalize="none"
+            />
+            <View style={{ height: 12 }} />
+            <CustomTextField
+              hint="Full Name"
+              value={registerData.name}
+              onChangeText={(text) => setRegisterData({ ...registerData, name: text })}
             />
             <View style={{ height: 12 }} />
             <CustomTextField

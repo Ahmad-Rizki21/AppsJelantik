@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { Alert, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { api } from '../../lib/apiService';
 import AuthService from '../services/authService';
 
 export default function VerifyOTPScreen() {
@@ -31,6 +32,15 @@ export default function VerifyOTPScreen() {
       const result = await AuthService.verifyOTP(email, otpCode);
 
       if (result.success) {
+        // Sync ke backend (auto-create user di PostgreSQL)
+        try {
+          console.log('[OTP] Syncing user to backend...');
+          await api.users.getMe();
+          console.log('[OTP] User synced successfully');
+        } catch (syncError: any) {
+          console.warn('[OTP] Sync failed (non-blocking):', syncError.message);
+        }
+
         Alert.alert('Berhasil', 'Email berhasil diverifikasi!', [
           {
             text: 'OK',

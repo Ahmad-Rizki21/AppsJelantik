@@ -41,6 +41,16 @@ class AuthService {
     // Listen to auth changes
     supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       console.log('Auth state changed:', event);
+      console.log('Session exists:', !!session);
+      console.log('Token exists:', !!session?.access_token);
+
+      // Debug: Print access token for Postman testing
+      if (session?.access_token) {
+        console.log('=== ACCESS TOKEN (for Postman) ===');
+        console.log(session.access_token);
+        console.log('===================================');
+      }
+
       this.currentSession = session;
       this.currentUser = session?.user ?? null;
     });
@@ -59,6 +69,12 @@ class AuthService {
 
   getCurrentSession(): Session | null {
     return this.currentSession;
+  }
+
+  getAccessToken(): string | null {
+    const token = this.currentSession?.access_token ?? null;
+    console.log('[AuthService] getAccessToken() called, token exists:', !!token);
+    return token;
   }
 
   isAuthenticated(): boolean {
@@ -211,17 +227,29 @@ class AuthService {
    */
   async loginWithGoogle(idToken: string): Promise<AuthResponse> {
     try {
+      console.log('[AuthService] Calling signInWithIdToken with Google token...');
       const { data: authData, error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
         token: idToken,
       });
 
+      console.log('[AuthService] signInWithIdToken result:', {
+        hasData: !!authData,
+        hasUser: !!authData?.user,
+        hasSession: !!authData?.session,
+        hasToken: !!authData?.session?.access_token,
+        error: error?.message,
+      });
+
       if (error) {
+        console.error('[AuthService] Google login error:', error);
         return { success: false, message: error.message };
       }
 
       this.currentUser = authData.user;
       this.currentSession = authData.session;
+
+      console.log('[AuthService] Session stored. Token exists:', !!this.currentSession?.access_token);
 
       return {
         success: true,
@@ -230,6 +258,7 @@ class AuthService {
         session: authData.session,
       };
     } catch (error: any) {
+      console.error('[AuthService] Google login exception:', error);
       return { success: false, message: error.message || 'Gagal login dengan Google' };
     }
   }
