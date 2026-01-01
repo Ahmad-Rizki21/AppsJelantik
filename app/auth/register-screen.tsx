@@ -98,13 +98,8 @@ export default function RegisterScreen() {
   };
 
   const handleGoogleSignIn = async () => {
-    const result = await AuthService.loginWithGoogle();
-    if (result.success) {
-      // Navigate to main screen
-      router.replace('/(tabs)');
-    } else {
-      Alert.alert('Info', result.message);
-    }
+    Alert.alert('Info', 'Gunakan halaman login utama untuk Google Sign-In');
+    router.push('/auth/login-screen');
   };
 
   return (

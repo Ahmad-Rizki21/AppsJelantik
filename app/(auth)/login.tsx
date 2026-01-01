@@ -54,10 +54,6 @@ export default function LoginScreen() {
     });
   }, []);
 
-  const handleBack = () => {
-    router.replace('/(auth)/onboarding');
-  };
-
   const handleLogin = async () => {
     if (!loginData.email) {
       showAlert('Error', 'Email wajib diisi', 'error');
@@ -94,7 +90,7 @@ export default function LoginScreen() {
       } else {
         showAlert('Login Gagal', result.message, 'error');
       }
-    } catch (error) {
+    } catch (_error) {
       showAlert('Error', 'Terjadi kesalahan. Silakan coba lagi.', 'error');
     } finally {
       setIsLoggingIn(false);
@@ -162,7 +158,7 @@ export default function LoginScreen() {
       } else {
         showAlert('Registrasi Gagal', result.message, 'error');
       }
-    } catch (error) {
+    } catch (_error) {
       showAlert('Error', 'Terjadi kesalahan. Silakan coba lagi.', 'error');
     } finally {
       setIsRegistering(false);
@@ -252,7 +248,7 @@ function LoginForm({
       try {
         setIsSigningInWithGoogle(true);
         await GoogleSignin.hasPlayServices();
-        const userInfo = await GoogleSignin.signIn();
+        await GoogleSignin.signIn();
         const tokens = await GoogleSignin.getTokens();
         const idToken = tokens.idToken;
 
@@ -380,7 +376,7 @@ function RegisterForm({
       try {
         setIsSigningInWithGoogle(true);
         await GoogleSignin.hasPlayServices();
-        const userInfo = await GoogleSignin.signIn();
+        await GoogleSignin.signIn();
         const tokens = await GoogleSignin.getTokens();
         const idToken = tokens.idToken;
 

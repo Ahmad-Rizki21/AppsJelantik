@@ -44,6 +44,7 @@ export default function OtpVerificationScreen() {
     return () => {
       // Cleanup timer on unmount
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startResendTimer = () => {
@@ -99,9 +100,9 @@ export default function OtpVerificationScreen() {
     setIsLoading(true);
 
     try {
-      const isValid = await AuthService.verifyOtp(email, code);
+      const result = await AuthService.verifyOTP(email, code);
 
-      if (isValid) {
+      if (result.success) {
         Alert.alert(
           'Sukses',
           'Verifikasi berhasil! Akun Anda telah terdaftar.',
@@ -131,7 +132,7 @@ export default function OtpVerificationScreen() {
     if (!canResend) return;
 
     try {
-      await AuthService.sendOtp(email);
+      await AuthService.resendOTP(email);
       Alert.alert('Sukses', 'Kode OTP baru telah dikirim ke email Anda.');
       startResendTimer();
       // Clear OTP

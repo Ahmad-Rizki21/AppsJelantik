@@ -50,7 +50,7 @@ export default function VerifyOTPScreen() {
       } else {
         Alert.alert('Verifikasi Gagal', result.message);
       }
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsVerifying(false);
@@ -68,7 +68,7 @@ export default function VerifyOTPScreen() {
       } else {
         Alert.alert('Gagal', result.message);
       }
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Gagal mengirim ulang kode.');
     } finally {
       setIsResending(false);
