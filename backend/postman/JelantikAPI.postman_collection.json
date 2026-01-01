@@ -1,0 +1,288 @@
+{
+  "info": {
+    "name": "JelantikAPI",
+    "description": "API Collection for JelantikApps Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "apiVersion",
+      "value": "api/v1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{supabaseToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "01. Public",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check API health status"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Packages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiVersion}}/packages?active=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiVersion}}", "packages"],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true",
+                  "description": "Filter active packages only"
+                }
+              ]
+            },
+            "description": "Get all internet packages"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Package by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiVersion}}/packages/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiVersion}}", "packages", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440001",
+                  "description": "Package ID"
+                }
+              ]
+            },
+            "description": "Get specific package details"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. Authenticated (Users)",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{supabaseToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiVersion}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiVersion}}", "users", "me"]
+            },
+            "description": "Get current user profile from Supabase JWT"
+          },
+          "response": []
+        },
+        {
+          "name": "Sync User from Supabase",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{supabaseToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiVersion}}/users/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiVersion}}", "users", "sync"]
+            },
+            "description": "Sync user data from Supabase to local database"
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{supabaseToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Ahmad Fauzi\",\n  \"phone\": \"08123456789\",\n  \"nik\": \"3201123456789012\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiVersion}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiVersion}}", "users", "me"]
+            },
+            "description": "Update current user profile"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. Admin (Packages)",
+      "item": [
+        {
+          "name": "Create Package",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{supabaseToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Basic\",\n  \"speed\": \"10 Mbps\",\n  \"price\": 150000,\n  \"description\": \"Paket internet cocok untuk rumahan\",\n  \"features\": [\"1-2 Perangkat\", \"Streaming SD\", \"Browsing & Chatting\", \"Unlimited Quota\"],\n  \"active_period\": 30,\n  \"is_promo\": false,\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiVersion}}/admin/packages",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiVersion}}", "admin", "packages"]
+            },
+            "description": "Create new internet package (Admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Package",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{supabaseToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Basic Updated\",\n  \"speed\": \"10 Mbps\",\n  \"price\": 175000,\n  \"description\": \"Paket internet cocok untuk rumahan (updated)\",\n  \"features\": [\"1-2 Perangkat\", \"Streaming SD\", \"Browsing & Chatting\", \"Unlimited Quota\"],\n  \"active_period\": 30,\n  \"is_promo\": false,\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{apiVersion}}/admin/packages/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiVersion}}", "admin", "packages", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440001",
+                  "description": "Package ID"
+                }
+              ]
+            },
+            "description": "Update existing package (Admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Package",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{supabaseToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{apiVersion}}/admin/packages/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiVersion}}", "admin", "packages", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440001",
+                  "description": "Package ID to delete"
+                }
+              ]
+            },
+            "description": "Delete a package (Admin)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
