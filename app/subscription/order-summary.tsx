@@ -17,7 +17,7 @@ export default function OrderSummaryScreen() {
   const params = useLocalSearchParams();
   const paymentMethod = params.paymentMethod as string;
   const isInvoiceMode = params.mode === 'invoice';
-  const _invoiceAmount = params.totalAmount ? parseInt(params.totalAmount.toString().replace(/[^0-9]/g, '')) : 0;
+  const invoiceAmount = params.totalAmount ? parseInt(params.totalAmount.toString().replace(/[^0-9]/g, '')) : 0;
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
