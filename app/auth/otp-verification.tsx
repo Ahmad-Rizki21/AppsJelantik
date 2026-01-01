@@ -121,7 +121,7 @@ export default function OtpVerificationScreen() {
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
@@ -138,7 +138,7 @@ export default function OtpVerificationScreen() {
       // Clear OTP
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Gagal mengirim ulang kode OTP.');
     }
   };

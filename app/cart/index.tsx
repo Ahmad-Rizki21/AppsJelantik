@@ -17,8 +17,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import CartService, { CartItem, CustomerData } from '../services/cartService';
 
-const { width } = Dimensions.get('window');
-
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);

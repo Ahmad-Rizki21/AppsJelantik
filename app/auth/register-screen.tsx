@@ -90,7 +90,7 @@ export default function RegisterScreen() {
       } else {
         Alert.alert('Registrasi Gagal', result.message);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsLoading(false);

@@ -90,7 +90,7 @@ export default function LoginScreen() {
       } else {
         showAlert('Login Gagal', result.message, 'error');
       }
-    } catch (_error) {
+    } catch {
       showAlert('Error', 'Terjadi kesalahan. Silakan coba lagi.', 'error');
     } finally {
       setIsLoggingIn(false);
@@ -158,7 +158,7 @@ export default function LoginScreen() {
       } else {
         showAlert('Registrasi Gagal', result.message, 'error');
       }
-    } catch (_error) {
+    } catch {
       showAlert('Error', 'Terjadi kesalahan. Silakan coba lagi.', 'error');
     } finally {
       setIsRegistering(false);

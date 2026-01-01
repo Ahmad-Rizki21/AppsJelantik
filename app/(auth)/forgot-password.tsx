@@ -40,7 +40,7 @@ export default function ForgotPasswordScreen() {
       } else {
         Alert.alert('Gagal', result.message);
       }
-    } catch (_error) {
+    } catch {
       Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
@@ -78,7 +78,7 @@ export default function ForgotPasswordScreen() {
       } else {
         Alert.alert('Gagal', result.message);
       }
-    } catch (_error) {
+    } catch {
       Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
