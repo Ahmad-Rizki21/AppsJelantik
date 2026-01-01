@@ -3,7 +3,6 @@ import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import {
-  Alert,
   StyleSheet,
   Text,
   TouchableOpacity,

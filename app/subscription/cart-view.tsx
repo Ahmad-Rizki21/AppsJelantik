@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,7 +29,7 @@ export default function CartViewScreen() {
       const items = CartService.getCartItems();
       setCartItems(items);
       setTotalAmount(CartService.getCartTotal());
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Gagal memuat keranjang');
     } finally {
       setIsLoading(false);
@@ -50,7 +49,7 @@ export default function CartViewScreen() {
             try {
               await CartService.removeFromCart(itemId);
               loadCartItems();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Gagal menghapus item');
             }
           }
@@ -63,7 +62,7 @@ export default function CartViewScreen() {
     try {
       await CartService.updateQuantity(itemId, quantity);
       loadCartItems();
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Gagal mengubah jumlah');
     }
   };
@@ -81,7 +80,7 @@ export default function CartViewScreen() {
             try {
               await CartService.clearCart();
               loadCartItems();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Gagal mengosongkan keranjang');
             }
           }

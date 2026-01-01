@@ -17,7 +17,7 @@ export default function OrderSummaryScreen() {
   const params = useLocalSearchParams();
   const paymentMethod = params.paymentMethod as string;
   const isInvoiceMode = params.mode === 'invoice';
-  const invoiceAmount = params.totalAmount ? parseInt(params.totalAmount.toString().replace(/[^0-9]/g, '')) : 0;
+  const _invoiceAmount = params.totalAmount ? parseInt(params.totalAmount.toString().replace(/[^0-9]/g, '')) : 0;
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
@@ -27,6 +27,7 @@ export default function OrderSummaryScreen() {
     if (!isInvoiceMode) {
       loadData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInvoiceMode]);
 
   const loadData = async () => {
@@ -39,7 +40,7 @@ export default function OrderSummaryScreen() {
 
       setCartItems(items);
       setCustomerData(customer);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Gagal memuat data');
     }
   };
@@ -74,7 +75,6 @@ export default function OrderSummaryScreen() {
   };
 
   const generatePaymentDetails = () => {
-    const prices = getTotalPrice();
     const orderId = `JLT-${Date.now()}`;
     // const timestamp = new Date().toLocaleString('id-ID'); // Unused
 
@@ -291,7 +291,7 @@ export default function OrderSummaryScreen() {
           ...paymentDetails
         }
       });
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Gagal membuat pembayaran. Silakan coba lagi.');
     } finally {
       setIsProcessing(false);

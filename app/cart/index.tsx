@@ -49,7 +49,7 @@ export default function CartScreen() {
         setSelectedTime(customerData.installationTime || null);
       }
     } catch {
-      console.error('Error loading cart:', error);
+      console.error('Error loading cart');
       Alert.alert('Error', 'Gagal memuat keranjang');
     } finally {
       setIsLoading(false);
@@ -98,7 +98,7 @@ export default function CartScreen() {
       };
       await CartService.saveCustomerData(mergedData);
     } catch {
-      console.error('Error saving customer data:', error);
+      console.error('Error saving customer data');
     }
   };
 
