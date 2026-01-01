@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AuthService from '../services/authService';
 
@@ -42,7 +42,7 @@ export default function SetPasswordScreen() {
       } else {
         Alert.alert('Gagal', result.message);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsLoading(false);

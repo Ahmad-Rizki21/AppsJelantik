@@ -10,7 +10,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
   Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,7 +48,7 @@ export default function CartScreen() {
         setSelectedDate(customerData.installationDate || null);
         setSelectedTime(customerData.installationTime || null);
       }
-    } catch (error) {
+    } catch {
       console.error('Error loading cart:', error);
       Alert.alert('Error', 'Gagal memuat keranjang');
     } finally {
@@ -98,7 +97,7 @@ export default function CartScreen() {
         ...data
       };
       await CartService.saveCustomerData(mergedData);
-    } catch (error) {
+    } catch {
       console.error('Error saving customer data:', error);
     }
   };
@@ -116,7 +115,7 @@ export default function CartScreen() {
             try {
               await CartService.removeFromCart(itemId);
               loadCartItems();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Gagal menghapus item');
             }
           }
@@ -141,7 +140,7 @@ export default function CartScreen() {
               setSelectedDate(null);
               setSelectedTime(null);
               CartService.clearCustomerData();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Gagal mengosongkan keranjang');
             }
           }

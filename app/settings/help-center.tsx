@@ -15,7 +15,7 @@ export default function HelpCenterScreen() {
             duration: 1000,
             useNativeDriver: true,
         }).start();
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const openLink = async (url: string) => {
         await Linking.openURL(url);

@@ -29,6 +29,7 @@ export default function PromoDetailScreen() {
             setIsInCart(CartService.isItemInCart(packageId));
         };
         loadCartStatus();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleAddToCart = async () => {
@@ -65,7 +66,7 @@ export default function PromoDetailScreen() {
                     }
                 ]
             );
-        } catch (error) {
+        } catch {
             Alert.alert("Error", "Gagal menambahkan ke keranjang");
         }
     };
@@ -91,7 +92,7 @@ export default function PromoDetailScreen() {
 
             // Navigate to cart
             router.push('/cart');
-        } catch (error) {
+        } catch {
             Alert.alert("Error", "Gagal menambahkan ke keranjang");
         }
     };

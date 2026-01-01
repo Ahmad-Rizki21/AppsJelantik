@@ -306,7 +306,7 @@ class AuthService {
 
       // 1. Verifikasi OTP (Recovery Token)
       // Ini akan meloginkan user jika sukses
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+      const { error: verifyError } = await supabase.auth.verifyOtp({
         email,
         token,
         type: 'recovery',
