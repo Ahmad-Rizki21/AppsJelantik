@@ -24,7 +24,7 @@ export default function PrivacyScreen() {
                     <Text style={styles.cardTitle}>🔒 Kebijakan Privasi</Text>
                     <Text style={styles.cardText}>
                         Terakhir diperbarui: 11 Desember 2025{'\n\n'}
-                        PT Artacomindo Jejaring Nusa ("Kami") berkomitmen untuk melindungi privasi dan data pribadi pelanggan. Kebijakan ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi Anda.
+                        PT Artacomindo Jejaring Nusa (&quot;Kami&quot;) berkomitmen untuk melindungi privasi dan data pribadi pelanggan. Kebijakan ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi Anda.
                     </Text>
                 </View>
 

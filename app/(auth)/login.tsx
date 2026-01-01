@@ -346,7 +346,7 @@ function LoginForm({
 
             <View style={{ height: 40 }} />
             <View style={styles.bottomLinkContainer}>
-                <Text style={styles.bottomLinkText}>Don't have an account? </Text>
+                <Text style={styles.bottomLinkText}>Don&apos;t have an account? </Text>
                 <TouchableOpacity onPress={onRegisterClick}>
                     <Text style={styles.bottomLinkHighlight}>Sign up</Text>
                 </TouchableOpacity>

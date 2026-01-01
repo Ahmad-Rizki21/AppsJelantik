@@ -86,7 +86,7 @@ export default function UpgradeHelpScreen() {
                         </View>
                         <View style={styles.stepContent}>
                             <Text style={styles.stepTitle}>Menu Paket</Text>
-                            <Text style={styles.stepText}>Pilih menu "Paket Internet" di dashboard</Text>
+                            <Text style={styles.stepText}>Pilih menu &quot;Paket Internet&quot; di dashboard</Text>
                         </View>
                     </View>
                     <View style={styles.stepContainer}>
@@ -125,7 +125,7 @@ export default function UpgradeHelpScreen() {
                         <Text style={styles.methodTitle}>Via WhatsApp</Text>
                         <Text style={styles.methodDesc}>
                             Kirim pesan ke 6282223616884 dengan format:{'\n'}
-                            "UPGRADE#[Nomor Pelanggan]#[Paket Yang Diinginkan]"
+                            &quot;UPGRADE#[Nomor Pelanggan]#[Paket Yang Diinginkan]&quot;
                         </Text>
                     </View>
                     {/* <View style={styles.methodContainer}>

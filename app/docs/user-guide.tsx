@@ -76,9 +76,9 @@ export default function UserGuideScreen() {
                             <Text style={styles.stepNumberText}>1</Text>
                         </View>
                         <View style={styles.stepContent}>
-                            <Text style={styles.stepTitle}>Tap "Daftar"</Text>
+                            <Text style={styles.stepTitle}>Tap &quot;Daftar&quot;</Text>
                             <Text style={styles.stepText}>
-                                Pilih menu "Daftar" di halaman awal
+                                Pilih menu &quot;Daftar&quot; di halaman awal
                             </Text>
                         </View>
                     </View>
@@ -169,7 +169,7 @@ export default function UserGuideScreen() {
                     <View style={styles.tipContainer}>
                         <Text style={styles.tipTitle}>Lupa Password?</Text>
                         <Text style={styles.tipText}>
-                            Gunakan fitur "Lupa Password" di halaman login. Ikuti instruksi untuk reset password via email.
+                            Gunakan fitur &quot;Lupa Password&quot; di halaman login. Ikuti instruksi untuk reset password via email.
                         </Text>
                     </View>
 

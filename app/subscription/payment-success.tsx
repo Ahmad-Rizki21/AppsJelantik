@@ -161,7 +161,7 @@ export default function PaymentSuccessScreen() {
                 1. Tunjukkan kode pembayaran ini ke kasir Alfamart
               </Text>
               <Text style={styles.instructionText}>
-                2. Sebutkan "Pembayaran Jelantik Internet"
+                2. Sebutkan &quot;Pembayaran Jelantik Internet&quot;
               </Text>
               <Text style={styles.instructionText}>
                 3. Lakukan pembayaran sebelum waktu habis (24 jam)
@@ -198,7 +198,7 @@ export default function PaymentSuccessScreen() {
                 1. Buka aplikasi e-wallet Anda
               </Text>
               <Text style={styles.instructionText}>
-                2. Pilih menu "Bayar" atau "Transfer"
+                2. Pilih menu &quot;Bayar&quot; atau &quot;Transfer&quot;
               </Text>
               <Text style={styles.instructionText}>
                 3. Masukkan jumlah: {total}
@@ -215,7 +215,7 @@ export default function PaymentSuccessScreen() {
                 1. Buka aplikasi e-wallet atau mobile banking
               </Text>
               <Text style={styles.instructionText}>
-                2. Pilih menu "QRIS Payment"
+                2. Pilih menu &quot;QRIS Payment&quot;
               </Text>
               <Text style={styles.instructionText}>
                 3. Scan QR code yang tersedia
